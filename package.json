@@ -1,0 +1,6 @@
+{
+  "name": "depenses-cb",
+  "private": true,
+  "type": "module",
+  "description": "Suivi des dépenses carte bancaire par photo du ticket (application web installable, 100% locale)."
+}

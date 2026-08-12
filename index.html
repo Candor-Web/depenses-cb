@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="description" content="Suivi des dépenses carte bancaire à partir d'une photo du ticket. Tout reste sur le téléphone.">
+<title>Dépenses CB</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1 id="topTitle">Dépenses CB</h1>
+  <div class="topbar-actions">
+    <button id="btnHelp" class="icon-btn" title="Aide" aria-label="Aide">?</button>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ CAPTURE ============ -->
+  <section id="view-capture" class="view">
+    <div class="hero card">
+      <div class="hero-label">Dépensé <span id="heroMonth">ce mois-ci</span></div>
+      <div class="hero-value" id="heroTotal">0,00 €</div>
+      <div class="hero-sub" id="heroSub">Aucun ticket enregistré</div>
+    </div>
+
+    <div class="capture-actions">
+      <label class="btn btn-primary btn-xl" for="inpCamera">
+        <span class="btn-ico">📷</span> Photographier un ticket
+      </label>
+      <input type="file" id="inpCamera" accept="image/*" capture="environment" hidden>
+
+      <div class="row-2">
+        <label class="btn btn-ghost" for="inpGallery"><span class="btn-ico">🖼️</span> Galerie</label>
+        <input type="file" id="inpGallery" accept="image/*" multiple hidden>
+        <button class="btn btn-ghost" id="btnManual"><span class="btn-ico">✍️</span> Sans photo</button>
+      </div>
+    </div>
+
+    <h2 class="section-title">Derniers tickets</h2>
+    <div id="recentList" class="list"></div>
+  </section>
+
+  <!-- ============ LISTE ============ -->
+  <section id="view-liste" class="view hidden">
+    <div class="filters">
+      <input type="search" id="fSearch" class="input" placeholder="Rechercher un commerçant…" autocomplete="off">
+      <div class="row-2">
+        <select id="fMonth" class="input"></select>
+        <select id="fCat" class="input"></select>
+      </div>
+    </div>
+    <div id="listTotals" class="totals-bar"></div>
+    <div id="expList" class="list"></div>
+  </section>
+
+  <!-- ============ BILAN ============ -->
+  <section id="view-bilan" class="view hidden">
+    <div class="filters">
+      <select id="bMonth" class="input"></select>
+    </div>
+    <div id="bilanContent"></div>
+  </section>
+
+  <!-- ============ OUTILS ============ -->
+  <section id="view-outils" class="view hidden">
+
+    <h2 class="section-title">Exporter</h2>
+    <div class="card tool-card">
+      <p class="tool-desc">Fichier CSV point-virgule, encodé pour Excel français, prêt à coller dans <em>budget 2026</em>.</p>
+      <select id="expScope" class="input"></select>
+      <div class="row-2 mt8">
+        <button class="btn btn-ghost" id="btnExpSimple">CSV relevé</button>
+        <button class="btn btn-ghost" id="btnExpDetail">CSV détaillé</button>
+      </div>
+      <button class="btn btn-ghost full mt8" id="btnExpArticles">CSV des articles</button>
+    </div>
+
+    <h2 class="section-title">Rapprochement bancaire</h2>
+    <div class="card tool-card">
+      <p class="tool-desc">Importez l'export CSV du relevé Société Générale : l'app pointe chaque ticket avec sa ligne bancaire et signale les dépenses sans justificatif.</p>
+      <label class="btn btn-ghost full" for="inpBank"><span class="btn-ico">📥</span> Importer un relevé CSV</label>
+      <input type="file" id="inpBank" accept=".csv,text/csv" hidden>
+      <div id="bankResult" class="mt8"></div>
+    </div>
+
+    <h2 class="section-title">Justificatifs</h2>
+    <div class="card tool-card">
+      <p class="tool-desc">Toutes les photos dans une archive ZIP, nommées <code>date_commerçant_montant.jpg</code>.</p>
+      <select id="zipScope" class="input"></select>
+      <button class="btn btn-ghost full mt8" id="btnZip">Exporter les photos</button>
+    </div>
+
+    <h2 class="section-title">Sauvegarde</h2>
+    <div class="card tool-card">
+      <p class="tool-desc"><strong>Les données ne vivent que dans ce téléphone.</strong> Si vous effacez les données de Chrome ou désinstallez l'app, tout est perdu. Faites une sauvegarde de temps en temps.</p>
+      <div class="row-2">
+        <button class="btn btn-ghost" id="btnBackup">Sauvegarder</button>
+        <label class="btn btn-ghost" for="inpRestore">Restaurer</label>
+        <input type="file" id="inpRestore" accept=".json,application/json" hidden>
+      </div>
+    </div>
+
+    <h2 class="section-title">Moteur de lecture</h2>
+    <div class="card tool-card">
+      <p class="tool-desc">La reconnaissance de texte fonctionne hors ligne, mais son moteur (environ 4,5 Mo) doit être téléchargé une fois. Faites-le en Wi-Fi.</p>
+      <div id="engineState" class="pill pill-muted">État inconnu</div>
+      <button class="btn btn-ghost full mt8" id="btnEngine">Télécharger le moteur</button>
+      <label class="switch mt8">
+        <input type="checkbox" id="optAutoOcr" checked>
+        <span>Lire le ticket automatiquement après la photo</span>
+      </label>
+      <label class="switch">
+        <input type="checkbox" id="optKeepPhoto" checked>
+        <span>Conserver la photo comme justificatif</span>
+      </label>
+    </div>
+
+    <h2 class="section-title">Zone rouge</h2>
+    <div class="card tool-card">
+      <button class="btn btn-danger full" id="btnWipe">Tout effacer</button>
+    </div>
+
+    <p class="footnote">Dépenses CB — application locale, aucune donnée n'est envoyée sur internet.<br><span id="storageInfo"></span></p>
+  </section>
+
+</main>
+
+<nav class="tabbar" role="tablist">
+  <button class="tab is-active" data-view="capture" role="tab"><span>＋</span>Ajouter</button>
+  <button class="tab" data-view="liste" role="tab"><span>≡</span>Dépenses</button>
+  <button class="tab" data-view="bilan" role="tab"><span>▤</span>Bilan</button>
+  <button class="tab" data-view="outils" role="tab"><span>⚙</span>Outils</button>
+</nav>
+
+<!-- ============ OVERLAY OCR ============ -->
+<div id="ocrOverlay" class="overlay hidden">
+  <div class="ocr-box">
+    <img id="ocrThumb" alt="">
+    <div class="ocr-status" id="ocrStatus">Préparation…</div>
+    <div class="progress"><div class="progress-bar" id="ocrBar"></div></div>
+    <div class="ocr-queue" id="ocrQueue"></div>
+    <button class="btn btn-ghost mt8" id="btnOcrCancel">Passer la lecture</button>
+  </div>
+</div>
+
+<!-- ============ EDITEUR ============ -->
+<section id="editor" class="editor hidden">
+  <header class="editor-top">
+    <button class="icon-btn" id="btnEdClose" aria-label="Fermer">✕</button>
+    <span id="edTitle">Nouvelle dépense</span>
+    <button class="btn btn-primary btn-sm" id="btnEdSave">Enregistrer</button>
+  </header>
+
+  <div class="editor-body">
+    <div id="edPhotoWrap" class="photo-wrap hidden">
+      <img id="edPhoto" alt="Photo du ticket">
+      <button class="chip chip-ghost photo-zoom" id="btnZoom">Agrandir</button>
+    </div>
+
+    <label class="field">
+      <span class="field-label">Montant <em id="edAmountFlag" class="flag"></em></span>
+      <div class="amount-input">
+        <input type="text" inputmode="decimal" id="edAmount" placeholder="0,00">
+        <span class="cur">€</span>
+      </div>
+    </label>
+
+    <label class="field">
+      <span class="field-label">Commerçant <em id="edMerchantFlag" class="flag"></em></span>
+      <input type="text" id="edMerchant" class="input" list="merchantList" autocomplete="off" placeholder="Nom du commerçant">
+      <datalist id="merchantList"></datalist>
+    </label>
+
+    <label class="field">
+      <span class="field-label">Date <em id="edDateFlag" class="flag"></em></span>
+      <input type="date" id="edDate" class="input">
+    </label>
+
+    <div class="field">
+      <span class="field-label">Catégorie</span>
+      <div id="edCats" class="chips"></div>
+    </div>
+
+    <div class="field">
+      <span class="field-label">Moyen de paiement</span>
+      <div id="edPay" class="segmented"></div>
+    </div>
+
+    <label class="field">
+      <span class="field-label">Note</span>
+      <input type="text" id="edNote" class="input" placeholder="Facultatif">
+    </label>
+
+    <details id="edItemsBox" class="details hidden">
+      <summary>Détail des articles (<span id="edItemsCount">0</span>)</summary>
+      <div id="edItems" class="items"></div>
+    </details>
+
+    <details id="edRawBox" class="details hidden">
+      <summary>Texte lu sur le ticket</summary>
+      <pre id="edRaw" class="raw"></pre>
+      <button class="btn btn-ghost full mt8" id="btnReOcr">Relire la photo autrement</button>
+    </details>
+
+    <button class="btn btn-danger full mt16 hidden" id="btnEdDelete">Supprimer cette dépense</button>
+  </div>
+</section>
+
+<div id="zoomOverlay" class="overlay hidden"><img id="zoomImg" alt=""></div>
+<div id="toast" class="toast hidden"></div>
+<div id="confirm" class="overlay hidden">
+  <div class="confirm-box">
+    <p id="confirmText"></p>
+    <div class="row-2">
+      <button class="btn btn-ghost" id="confirmNo">Annuler</button>
+      <button class="btn btn-danger" id="confirmYes">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js" type="module"></script>
+</body>
+</html>

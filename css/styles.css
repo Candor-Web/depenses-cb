@@ -112,7 +112,9 @@ main { max-width: 560px; margin: 0 auto; padding: 14px 14px 24px; }
 
 .capture-actions { margin-top: 16px; display: grid; gap: 10px; }
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.mt8 { margin-top: 8px; } .mt16 { margin-top: 16px; }
+.mt8 { margin-top: 8px; } .mt16 { margin-top: 16px; } .mb12 { margin-bottom: 12px; }
+.hint { margin: 2px 2px 0; font-size: 0.75rem; line-height: 1.5; color: var(--muted); }
+.hint b { color: var(--text-2); font-weight: 600; }
 
 /* ---------- champs ---------- */
 .input {

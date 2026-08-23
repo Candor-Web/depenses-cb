@@ -7,7 +7,7 @@
  *           depuis l'écran Outils ou au premier usage, jamais imposé.
  */
 
-const APP_CACHE = 'depenses-cb-app-v1';
+const APP_CACHE = 'depenses-cb-app-v2';
 const OCR_CACHE = 'depenses-cb-ocr-v1';
 
 const SHELL = [

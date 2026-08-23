@@ -30,7 +30,20 @@ du navigateur.
 |---|---|
 | **Photographier un ticket** | Ouvre l'appareil photo, lit le ticket, pré-remplit la fiche |
 | **Galerie** | Même chose depuis des photos déjà prises (plusieurs à la fois) |
-| **Sans photo** | Saisie manuelle directe |
+| **Sans ticket** | Saisie directe d'un montant, sans justificatif |
+
+### Ajouter un montant sans ticket
+
+Pour une dépense en espèces, un achat au marché, un paiement en ligne ou un
+ticket perdu : bouton **Sans ticket** sur l'écran d'accueil, ou **Ajouter un
+montant sans ticket** en haut de l'onglet Dépenses. La fiche s'ouvre vide, à la
+date du jour, le clavier numérique déjà actif sur le montant. Seul le montant
+est obligatoire ; le commerçant se complète depuis l'historique des noms déjà
+saisis, et le moyen de paiement permet de distinguer CB, espèces et autre.
+
+Ces dépenses sont comptées comme *sans justificatif* dans le bilan, et le
+rapprochement bancaire les traite comme les autres : une dépense en espèces
+apparaîtra logiquement dans les tickets sans ligne bancaire.
 
 Après la lecture, chaque champ porte une pastille :
 

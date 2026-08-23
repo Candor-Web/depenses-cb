@@ -30,6 +30,16 @@ const urlCache = new Map();
 
 async function boot() {
   if ('serviceWorker' in navigator) {
+    // Une nouvelle version publiée doit s'appliquer au lancement suivant,
+    // pas deux lancements plus tard : on recharge dès que le nouveau
+    // service worker prend la main (jamais à la toute première visite).
+    const dejaControlee = !!navigator.serviceWorker.controller;
+    let recharge = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!dejaControlee || recharge) return;
+      recharge = true;
+      location.reload();
+    });
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
   if (navigator.storage && navigator.storage.persist) {
@@ -319,6 +329,15 @@ async function processOne(file, isLast) {
    Éditeur
    ========================================================= */
 
+/** Dépense saisie à la main, sans justificatif photo. */
+function startManual() {
+  openEditor({
+    id: db.uid(), createdAt: Date.now(), date: iso(new Date()), merchant: '', amount: null,
+    category: 'divers', payment: 'CB', note: '', items: [], vat: [], photoId: null,
+    ocrText: '', source: 'manuel', flags: {}, matchedTxId: null,
+  }, true);
+}
+
 function buildCategoryChips() {
   $('#edCats').innerHTML = CATEGORIES.map(c =>
     `<button type="button" class="chip" data-cat="${c.id}"><i style="background:${c.color}"></i>${c.label}</button>`).join('');
@@ -350,7 +369,9 @@ async function openEditor(e, isNew = false) {
   if (!e) return;
   current = { ...e, isNew };
 
-  $('#edTitle').textContent = isNew ? 'Nouvelle dépense' : 'Modifier';
+  $('#edTitle').textContent = isNew
+    ? (e.photoId ? 'Nouveau ticket' : 'Montant sans ticket')
+    : 'Modifier';
   $('#edAmount').value = e.amount != null ? num2(e.amount) : '';
   $('#edMerchant').value = e.merchant || '';
   $('#edDate').value = e.date || iso(new Date());
@@ -643,11 +664,8 @@ function wire() {
 
   $('#inpCamera').addEventListener('change', ev => { handleFiles(ev.target.files); ev.target.value = ''; });
   $('#inpGallery').addEventListener('change', ev => { handleFiles(ev.target.files); ev.target.value = ''; });
-  $('#btnManual').addEventListener('click', () => openEditor({
-    id: db.uid(), createdAt: Date.now(), date: iso(new Date()), merchant: '', amount: null,
-    category: 'divers', payment: 'CB', note: '', items: [], vat: [], photoId: null,
-    ocrText: '', source: 'manuel', flags: {}, matchedTxId: null,
-  }, true));
+  $('#btnManual').addEventListener('click', startManual);
+  $('#btnManual2').addEventListener('click', startManual);
 
   $('#btnOcrCancel').addEventListener('click', () => { cancelled = true; hideOverlay(); });
 

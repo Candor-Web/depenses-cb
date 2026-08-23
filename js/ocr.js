@@ -4,18 +4,26 @@
  * téléchargé).
  */
 
+/**
+ * Chemins absolus, calculés depuis l'emplacement de ce module.
+ * Indispensable : Tesseract lance son worker depuis une URL blob, où un
+ * chemin relatif n'a plus de base valable, et l'application peut être servie
+ * depuis un sous-dossier (GitHub Pages) autant que depuis la racine.
+ */
+const BASE = new URL('../', import.meta.url).href;
+
 const V = {
-  lib:  'vendor/tesseract/tesseract.min.js',
-  worker: 'vendor/tesseract/worker.min.js',
-  core: 'vendor/tesseract/',
-  lang: 'vendor/lang',
+  lib:    BASE + 'vendor/tesseract/tesseract.min.js',
+  worker: BASE + 'vendor/tesseract/worker.min.js',
+  core:   BASE + 'vendor/tesseract/',
+  lang:   BASE + 'vendor/lang',
 };
 
 export const OCR_CACHE = 'depenses-cb-ocr-v1';
 export const ENGINE_FILES = [
   V.lib, V.worker,
-  'vendor/tesseract/tesseract-core-simd-lstm.wasm.js',
-  'vendor/lang/fra.traineddata',
+  BASE + 'vendor/tesseract/tesseract-core-simd-lstm.wasm.js',
+  BASE + 'vendor/lang/fra.traineddata',
 ];
 
 /* ---------------- préparation de l'image ---------------- */

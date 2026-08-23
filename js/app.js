@@ -7,6 +7,7 @@ import * as db from './db.js';
 import { parseReceipt, iso } from './parse.js';
 import { CATEGORIES, catLabel, catColor, guessCategory, learn, norm } from './categories.js';
 import { readReceipt, compressForStorage, isEngineCached, downloadEngine } from './ocr.js';
+import { openCamera, closeCamera, shoot, toggleTorch, cameraSupportee } from './camera.js';
 import { eur, dateFR, num2, downloadCSV, download, makeZip, safeName,
          rowsReleve, rowsDetail, rowsArticles } from './export.js';
 import { renderBilan, monthKey, monthLabel, sum } from './bilan.js';
@@ -55,6 +56,13 @@ async function boot() {
   buildPaymentSegments();
   wire();
   await reload();
+
+  // Android a-t-il rechargé la page pendant une prise de vue ?
+  const enCours = await db.getMeta('captureEnCours', 0);
+  if (enCours && Date.now() - enCours < 600000) {
+    await db.setMeta('captureEnCours', 0);
+    toast('La photo précédente a été perdue au retour de l\'appareil photo. Utilisez le bouton vert, il photographie sans quitter l\'application.');
+  }
   refreshEngineState();
   refreshStorage();
 }
@@ -232,6 +240,23 @@ function renderMerchantList() {
 let queue = [];
 let cancelled = false;
 
+/** Prise de vue dans l'application, sans passer la main à Android. */
+async function prendrePhoto() {
+  try {
+    const blob = await openCamera();
+    if (!blob) return;
+    await handleFiles([new File([blob], 'ticket.jpg', { type: blob.type || 'image/jpeg' })]);
+  } catch (err) {
+    basculerVersAppareilSysteme();
+    toast('Appareil photo intégré indisponible, utilisez celui du téléphone');
+  }
+}
+
+function basculerVersAppareilSysteme() {
+  $('#btnCamera').classList.add('hidden');
+  $('#lblCamera').classList.remove('hidden');
+}
+
 async function handleFiles(files) {
   queue = Array.from(files).filter(f => f.type.startsWith('image/'));
   if (!queue.length) return;
@@ -272,7 +297,9 @@ async function processOne(file, isLast) {
   let parsed = null, ocr = null;
   if (SETTINGS.autoOcr && !cancelled) {
     try {
-      ocr = await readReceipt(stored || file, {
+      // toujours lire la photo d'origine : la copie conservée est réduite
+      // pour tenir dans le téléphone, les caractères y sont trop petits
+      ocr = await readReceipt(file, {
         onProgress: (label, p) => {
           $('#ocrStatus').textContent = label + '…';
           $('#ocrBar').style.width = Math.round(p * 100) + '%';
@@ -322,6 +349,12 @@ async function processOne(file, isLast) {
     await reload();
   } else {
     openEditor(e, true);
+    // ne jamais laisser l'utilisateur devant une fiche vide sans explication
+    if (SETTINGS.autoOcr && e.amount == null) {
+      toast(ocr && ocr.text.trim()
+        ? 'Montant introuvable sur ce ticket, saisissez-le'
+        : 'Rien n\'a pu être lu sur la photo, saisissez le montant');
+    }
   }
 }
 
@@ -662,7 +695,21 @@ function confirmBox(text) {
 function wire() {
   $$('.tab').forEach(t => t.addEventListener('click', () => show(t.dataset.view)));
 
-  $('#inpCamera').addEventListener('change', ev => { handleFiles(ev.target.files); ev.target.value = ''; });
+  // appareil photo intégré, pour ne jamais quitter l'application
+  if (cameraSupportee()) $('#btnCamera').addEventListener('click', prendrePhoto);
+  else basculerVersAppareilSysteme();
+  $('#camShoot').addEventListener('click', shoot);
+  $('#camCancel').addEventListener('click', () => closeCamera(null));
+  $('#camTorch').addEventListener('click', toggleTorch);
+
+  // repli par l'appareil photo du téléphone : on note le départ pour pouvoir
+  // expliquer la perte si Android recharge la page pendant la prise de vue
+  $('#lblCamera').addEventListener('click', () => db.setMeta('captureEnCours', Date.now()));
+  $('#inpCamera').addEventListener('change', async ev => {
+    await db.setMeta('captureEnCours', 0);
+    handleFiles(ev.target.files);
+    ev.target.value = '';
+  });
   $('#inpGallery').addEventListener('change', ev => { handleFiles(ev.target.files); ev.target.value = ''; });
   $('#btnManual').addEventListener('click', startManual);
   $('#btnManual2').addEventListener('click', startManual);

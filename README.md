@@ -28,9 +28,27 @@ du navigateur.
 
 | Geste | Résultat |
 |---|---|
-| **Photographier un ticket** | Ouvre l'appareil photo, lit le ticket, pré-remplit la fiche |
+| **Photographier un ticket** | Ouvre l'appareil photo intégré, lit le ticket, pré-remplit la fiche |
 | **Galerie** | Même chose depuis des photos déjà prises (plusieurs à la fois) |
 | **Sans ticket** | Saisie directe d'un montant, sans justificatif |
+
+### Pourquoi un appareil photo intégré
+
+À la première prise de vue, Chrome demande l'autorisation d'accéder à
+l'appareil photo. Il faut l'accepter, car l'application photographie
+elle-même, sans passer par l'application Appareil photo d'Android.
+
+Ce n'est pas un caprice. Quand une application web installée cède la main à
+l'appareil photo du téléphone, Android la met en arrière-plan et, sur un
+appareil qui manque de mémoire comme le Pixel 3, la recharge au retour : la
+photo est perdue avant d'avoir été traitée, et on retombe sur l'écran d'accueil
+sans le moindre message. En capturant dans la page, on ne quitte jamais
+l'application.
+
+L'écran de prise de vue affiche un cadre en pointillés : y faire tenir le
+ticket en entier. Un bouton **Lampe** apparaît si le téléphone le permet,
+utile sur un ticket pâle. Si l'autorisation est refusée, l'application bascule
+d'elle-même sur l'appareil photo du téléphone, avec le risque décrit ci-dessus.
 
 ### Ajouter un montant sans ticket
 
@@ -116,6 +134,7 @@ index.html                 écran unique, 4 onglets
 css/styles.css             thème sombre, palette de graphiques validée
 js/app.js                  orchestration de l'interface
 js/db.js                   stockage IndexedDB
+js/camera.js               appareil photo intégré (capture sans quitter la page)
 js/ocr.js                  préparation d'image + moteur Tesseract
 js/parse.js                extraction montant / date / commerçant / articles
 js/categories.js           9 catégories, affectation par mots-clés

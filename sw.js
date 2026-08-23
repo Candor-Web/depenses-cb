@@ -7,7 +7,7 @@
  *           depuis l'écran Outils ou au premier usage, jamais imposé.
  */
 
-const APP_CACHE = 'depenses-cb-app-v3';
+const APP_CACHE = 'depenses-cb-app-v4';
 const OCR_CACHE = 'depenses-cb-ocr-v1';
 
 const SHELL = [
@@ -20,6 +20,7 @@ const SHELL = [
   'js/parse.js',
   'js/categories.js',
   'js/ocr.js',
+  'js/camera.js',
   'js/export.js',
   'js/bilan.js',
   'js/bank.js',

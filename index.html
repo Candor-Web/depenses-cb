@@ -31,7 +31,10 @@
     </div>
 
     <div class="capture-actions">
-      <label class="btn btn-primary btn-xl" for="inpCamera">
+      <button class="btn btn-primary btn-xl" id="btnCamera">
+        <span class="btn-ico">📷</span> Photographier un ticket
+      </button>
+      <label class="btn btn-primary btn-xl hidden" for="inpCamera" id="lblCamera">
         <span class="btn-ico">📷</span> Photographier un ticket
       </label>
       <input type="file" id="inpCamera" accept="image/*" capture="environment" hidden>
@@ -140,6 +143,18 @@
   <button class="tab" data-view="bilan" role="tab"><span>▤</span>Bilan</button>
   <button class="tab" data-view="outils" role="tab"><span>⚙</span>Outils</button>
 </nav>
+
+<!-- ============ APPAREIL PHOTO INTEGRE ============ -->
+<div id="camOverlay" class="cam hidden">
+  <video id="camVideo" playsinline muted autoplay></video>
+  <div class="cam-guide"><span>Cadrez le ticket en entier</span></div>
+  <p class="cam-hint">Ticket à plat, bien éclairé, sans ombre portée. <span id="camInfo"></span></p>
+  <div class="cam-bar">
+    <button class="cam-side" id="camCancel">Annuler</button>
+    <button class="cam-shutter" id="camShoot" aria-label="Prendre la photo"></button>
+    <button class="cam-side hidden" id="camTorch">Lampe</button>
+  </div>
+</div>
 
 <!-- ============ OVERLAY OCR ============ -->
 <div id="ocrOverlay" class="overlay hidden">

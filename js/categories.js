@@ -90,8 +90,11 @@ export function guessCategory(merchant = '', fullText = '', learned = {}) {
   for (const [cat, words] of RULES) {
     for (const w of words) {
       const re = wordRe(w);
-      if (m && re.test(m)) add(cat, 3);
-      else if (f && re.test(f)) add(cat, 1);
+      // un mot-clé en plusieurs mots est plus spécifique qu'un mot isolé :
+      // « Back Market » doit l'emporter sur le « market » des supermarchés
+      const precision = w.includes(' ') ? 1 : 0;
+      if (m && re.test(m)) add(cat, 3 + precision);
+      else if (f && re.test(f)) add(cat, 1 + precision * 0.5);
     }
   }
   for (const [cat, re] of STRONG) if (re.test(f) || re.test(m)) add(cat, 5);

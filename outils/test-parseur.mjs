@@ -262,6 +262,9 @@ const CAS = [
   ['Amazon', '', 'internet'],
   ['PayPal', '', 'internet'],
   ['Vinted', '', 'internet'],
+  // « market » figure aussi dans les supermarchés : le mot-clé le plus précis gagne
+  ['Back Market', '', 'internet'],
+  ['Carrefour Market', '', 'alimentation'],
   // les abonnements ne sont pas des achats en ligne : ils sont suivis ailleurs
   ['Free Mobile', '', 'divers'],
   ['Freebox', '', 'divers'],

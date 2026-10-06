@@ -68,6 +68,21 @@ Après la lecture, chaque champ porte une pastille :
 - **lu** (vert) : l'information a été trouvée de façon fiable ;
 - **à vérifier** (orange) : c'est une supposition, relire avant d'enregistrer.
 
+### Les catégories
+
+Onze catégories : Alimentation, Carburant, Restaurant, Santé, Maison, Loisirs,
+Transport, Habillement, Retrait CB, Internet, Divers.
+
+**Internet** ne regroupe que les achats en ligne demandant une action d'achat
+(Amazon, PayPal, Vinted, Cdiscount, places de marché, boutiques
+d'applications). Les abonnements et les fournisseurs d'accès en sont exclus
+volontairement : ces prélèvements récurrents sont déjà suivis dans les dépenses
+mensuelles du budget.
+
+La catégorie est devinée par mots-clés, mais **dès que vous la corrigez à la
+main, l'application retient votre choix pour ce commerçant** et l'appliquera
+toute seule la fois suivante.
+
 ### La date est toujours celle du ticket
 
 Une dépense est rangée dans le mois **du ticket**, jamais dans celui où vous

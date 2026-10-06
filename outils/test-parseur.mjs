@@ -261,7 +261,10 @@ console.log('\n--- affectation des catégories ---');
 const CAS = [
   ['Amazon', '', 'internet'],
   ['PayPal', '', 'internet'],
-  ['Free Mobile', '', 'internet'],
+  ['Vinted', '', 'internet'],
+  // les abonnements ne sont pas des achats en ligne : ils sont suivis ailleurs
+  ['Free Mobile', '', 'divers'],
+  ['Freebox', '', 'divers'],
   ['Retrait', 'RETRAIT D\'ESPECES DAB 00123', 'retrait'],
   ['Crédit Agricole', 'RETRAIT DAB ROGNES', 'retrait'],
   ['Intermarché', 'DRIVE RETRAIT EN MAGASIN', 'alimentation'],

@@ -51,11 +51,14 @@ const RULES = [
                    'CHAUSSURE', 'ANDRE', 'ERAM', 'INTERSPORT', 'GO SPORT', 'PRETMANIA', 'VETEMENT',
                    'BIJOUTERIE', 'SEPHORA', 'YVES ROCHER', 'MARIONNAUD', 'NOCIBE']],
   ['retrait', ['RETRAIT', 'DAB', 'DISTRIBUTEUR', 'GAB']],
-  ['internet', ['AMAZON', 'CDISCOUNT', 'EBAY', 'ALIEXPRESS', 'TEMU', 'SHEIN', 'VINTED', 'ETSY',
-                'LEBONCOIN', 'BACKMARKET', 'RAKUTEN', 'ZALANDO', 'ASOS', 'PAYPAL', 'STRIPE',
-                'OVH', 'IONOS', 'GANDI', 'WORDPRESS', 'CANVA', 'ADOBE', 'MICROSOFT', 'GOOGLE',
-                'APPLE COM', 'OPENAI', 'ANTHROPIC', 'CLAUDE AI', 'FREE MOBILE', 'FREEBOX',
-                'BOUYGUES', 'SFR', 'ABONNEMENT', 'EN LIGNE', 'INTERNET']],
+  // Achats en ligne demandant une action d'achat. Volontairement SANS les
+  // abonnements ni les fournisseurs d'accès : ces prélèvements récurrents sont
+  // déjà suivis ailleurs, dans les dépenses mensuelles du budget.
+  ['internet', ['AMAZON', 'PAYPAL', 'CDISCOUNT', 'EBAY', 'ALIEXPRESS', 'TEMU', 'SHEIN', 'WISH',
+                'VINTED', 'ETSY', 'LEBONCOIN', 'BACK MARKET', 'BACKMARKET', 'RAKUTEN',
+                'VEEPEE', 'SHOWROOMPRIVE', 'MANOMANO', 'ZALANDO', 'ASOS', 'SARENZA',
+                'GOOGLE PLAY', 'APP STORE', 'APPLE COM', 'STEAM',
+                'ACHAT EN LIGNE', 'COMMANDE WEB', 'VENTE A DISTANCE']],
 ];
 
 /** Indices très caractéristiques : ils l'emportent sur le nom de l'enseigne. */

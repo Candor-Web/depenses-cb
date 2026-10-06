@@ -68,6 +68,21 @@ Après la lecture, chaque champ porte une pastille :
 - **lu** (vert) : l'information a été trouvée de façon fiable ;
 - **à vérifier** (orange) : c'est une supposition, relire avant d'enregistrer.
 
+### La date est toujours celle du ticket
+
+Une dépense est rangée dans le mois **du ticket**, jamais dans celui où vous
+l'avez photographiée. Un ticket de juillet enregistré en octobre compte pour
+juillet.
+
+Conséquence : quand la date n'a pas pu être lue, le champ reste **vide** et
+l'enregistrement est refusé tant que vous ne l'avez pas saisie. L'application
+n'invente pas la date du jour, qui fausserait le bilan. Pour une saisie **sans
+ticket**, la date du jour est proposée par défaut, et reste modifiable.
+
+Si un traitement par lot produit des dépenses sans date, elles apparaissent
+en tête de l'onglet Dépenses sous **Date à compléter**, et le bilan les
+signale. Elles ne sont comptées dans aucun mois tant que la date manque.
+
 Le bandeau *Texte lu sur le ticket* montre ce que le moteur a réellement
 déchiffré. Si le résultat est mauvais, **Relire la photo autrement** relance la
 lecture avec un autre traitement d'image (noir et blanc ↔ contraste), ce qui
@@ -137,7 +152,7 @@ js/db.js                   stockage IndexedDB
 js/camera.js               appareil photo intégré (capture sans quitter la page)
 js/ocr.js                  préparation d'image + moteur Tesseract
 js/parse.js                extraction montant / date / commerçant / articles
-js/categories.js           9 catégories, affectation par mots-clés
+js/categories.js           11 catégories, affectation par mots-clés
 js/bank.js                 lecture du relevé CSV et rapprochement
 js/export.js               CSV Windows-1252, archive ZIP
 js/bilan.js                tableau de bord mensuel
@@ -162,7 +177,8 @@ Contrôler le parseur après toute modification des règles :
 cd livrables/applications/depenses-cb && node outils/test-parseur.mjs
 ```
 
-Le banc d'essai rejoue six tickets réels (Intermarché Venelles, station
-Carrefour La Pioline, Carrefour Aix Bienvenue, Hostellerie des vins de Rognes,
-E.Leclerc Salon, La Rotonde) en version propre et en version bruitée : 25
-contrôles, tous au vert.
+Le banc d'essai rejoue huit tickets (Intermarché Venelles, station Carrefour
+La Pioline, Carrefour Aix Bienvenue, Hostellerie des vins de Rognes, E.Leclerc
+Salon, La Rotonde, un retrait au distributeur et un ticket sans date lisible)
+en version propre et en version bruitée, plus huit contrôles d'affectation de
+catégorie : 38 contrôles, tous au vert.

@@ -162,7 +162,8 @@ function mountThumbs(root) {
    ========================================================= */
 
 function renderMonthSelectors() {
-  const keys = [...new Set(EXP.map(e => monthKey(e.date)))].sort().reverse();
+  // les dépenses sans date ne rejoignent aucun mois tant qu'elle n'est pas saisie
+  const keys = [...new Set(EXP.map(e => monthKey(e.date)).filter(Boolean))].sort().reverse();
   const cur = monthKey(iso(new Date()));
   if (!keys.includes(cur)) keys.unshift(cur);
 
@@ -212,10 +213,11 @@ function renderList() {
 
   let html = '', day = null;
   list.forEach(e => {
-    if (e.date !== day) {
-      day = e.date;
-      const dayTotal = list.filter(x => x.date === day).reduce((a, x) => a + x.amount, 0);
-      html += `<div class="day-head"><span>${dateFR(day)}</span><b>${eur(dayTotal)}</b></div>`;
+    const jour = e.date || '';
+    if (jour !== day) {
+      day = jour;
+      const dayTotal = list.filter(x => (x.date || '') === day).reduce((a, x) => a + x.amount, 0);
+      html += `<div class="day-head"><span>${day ? dateFR(day) : 'Date à compléter'}</span><b>${eur(dayTotal)}</b></div>`;
     }
     html += rowHTML(e);
   });
@@ -319,11 +321,11 @@ async function processOne(file, isLast) {
   URL.revokeObjectURL(previewUrl);
   if (isLast) hideOverlay();
 
-  const now = new Date();
   const e = {
     id: db.uid(),
     createdAt: Date.now(),
-    date: parsed ? parsed.date.value : iso(now),
+    // date du ticket uniquement : jamais celle du jour, qui n'a rien à voir
+    date: (parsed && parsed.date.value) || '',
     merchant: parsed ? parsed.merchant.value : '',
     amount: parsed ? parsed.amount.value : null,
     category: 'divers',
@@ -344,16 +346,20 @@ async function processOne(file, isLast) {
 
   if (queue.length > 1) {
     // traitement par lot : on enregistre et on vérifiera dans la liste
-    e.needsCheck = !e.amount || e.flags.amount !== 'high';
+    e.needsCheck = !e.amount || !e.date || e.flags.amount !== 'high';
     await db.putExpense(e);
     await reload();
   } else {
     openEditor(e, true);
     // ne jamais laisser l'utilisateur devant une fiche vide sans explication
-    if (SETTINGS.autoOcr && e.amount == null) {
+    if (SETTINGS.autoOcr && (e.amount == null || !e.date)) {
+      const sansMontant = e.amount == null, sansDate = !e.date;
+      const manque = sansMontant && sansDate ? 'le montant ni la date'
+        : sansMontant ? 'le montant' : 'la date';
+      const pronom = sansMontant && sansDate ? 'les' : sansMontant ? 'le' : 'la';
       toast(ocr && ocr.text.trim()
-        ? 'Montant introuvable sur ce ticket, saisissez-le'
-        : 'Rien n\'a pu être lu sur la photo, saisissez le montant');
+        ? `Impossible de lire ${manque} sur ce ticket, saisissez-${pronom}`
+        : 'Rien n\'a pu être lu sur la photo, complétez la fiche');
     }
   }
 }
@@ -387,7 +393,11 @@ function buildPaymentSegments() {
   }));
 }
 
-const FLAG = { high: ['flag-ok', 'lu'], low: ['flag-check', 'à vérifier'] };
+const FLAG = {
+  high: ['flag-ok', 'lu'],
+  low: ['flag-check', 'à vérifier'],
+  manquant: ['flag-check', 'à saisir'],
+};
 
 function setFlag(sel, conf) {
   const el = $(sel);
@@ -407,7 +417,9 @@ async function openEditor(e, isNew = false) {
     : 'Modifier';
   $('#edAmount').value = e.amount != null ? num2(e.amount) : '';
   $('#edMerchant').value = e.merchant || '';
-  $('#edDate').value = e.date || iso(new Date());
+  // la date du ticket ne se devine pas : si elle n'a pas été lue, le champ
+  // reste vide plutôt que d'afficher la date du jour, qui fausserait le bilan
+  $('#edDate').value = e.date || '';
   $('#edNote').value = e.note || '';
 
   $$('#edCats .chip').forEach(b => b.classList.toggle('is-active', b.dataset.cat === (e.category || 'divers')));
@@ -415,7 +427,7 @@ async function openEditor(e, isNew = false) {
 
   const f = e.flags || {};
   setFlag('#edAmountFlag', f.amount);
-  setFlag('#edDateFlag', f.date);
+  setFlag('#edDateFlag', e.date ? f.date : 'manquant');
   setFlag('#edMerchantFlag', f.merchant);
 
   // photo
@@ -466,6 +478,10 @@ async function saveEditor() {
   const amount = parseAmountInput($('#edAmount').value);
   if (amount == null || amount <= 0) { toast('Indiquez un montant'); $('#edAmount').focus(); return; }
 
+  // sans date, la dépense ne peut entrer ni dans un mois ni dans le bilan
+  const date = $('#edDate').value;
+  if (!date) { toast('Indiquez la date du ticket'); $('#edDate').focus(); return; }
+
   const wasNew = !!current.isNew;
   const merchant = $('#edMerchant').value.trim();
   const category = ($('#edCats .chip.is-active') || {}).dataset?.cat || 'divers';
@@ -475,7 +491,7 @@ async function saveEditor() {
     ...current,
     amount,
     merchant,
-    date: $('#edDate').value || iso(new Date()),
+    date,
     category,
     payment,
     note: $('#edNote').value.trim(),
@@ -565,9 +581,9 @@ async function exportZip() {
     if (!blob) continue;
     const buf = new Uint8Array(await blob.arrayBuffer());
     files.push({
-      name: `${e.date}_${safeName(e.merchant)}_${num2(e.amount).replace(',', '-')}EUR.jpg`,
+      name: `${e.date || 'sans-date'}_${safeName(e.merchant)}_${num2(e.amount).replace(',', '-')}EUR.jpg`,
       data: buf,
-      date: new Date(e.date),
+      date: e.date ? new Date(e.date) : new Date(e.createdAt || Date.now()),
     });
   }
   download(makeZip(files), `justificatifs_${stamp(key)}.zip`);

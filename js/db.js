@@ -50,8 +50,14 @@ export const delExpense = id => tx('expenses', 'readwrite', s => s.delete(id));
 
 export async function allExpenses() {
   const rows = await tx('expenses', 'readonly', s => s.getAll());
-  return (rows || []).sort((a, b) =>
-    b.date.localeCompare(a.date) || (b.createdAt || 0) - (a.createdAt || 0));
+  // Tri par la date de la dépense uniquement. Celles dont la date reste à
+  // saisir passent en tête pour ne pas être oubliées ; la date d'enregistrement
+  // ne sert qu'à départager deux dépenses du même jour.
+  return (rows || []).sort((a, b) => {
+    const da = a.date || '', dbb = b.date || '';
+    if (!da !== !dbb) return da ? 1 : -1;
+    return dbb.localeCompare(da) || (b.createdAt || 0) - (a.createdAt || 0);
+  });
 }
 
 /* ---------- photos ---------- */

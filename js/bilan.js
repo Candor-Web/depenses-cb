@@ -29,8 +29,18 @@ export function renderBilan(el, expenses, key) {
   const inMonth = expenses.filter(e => monthKey(e.date) === key);
   const prev = expenses.filter(e => monthKey(e.date) === prevMonth(key));
 
+  // Une dépense sans date n'appartient à aucun mois : elle est exclue de tous
+  // les totaux, et signalée ici pour ne pas rester invisible.
+  const sansDate = expenses.filter(e => !e.date);
+  const alerte = sansDate.length ? `
+    <div class="chart alerte">
+      <h3 class="chart-title">${sansDate.length} dépense${sansDate.length > 1 ? 's' : ''} sans date</h3>
+      <p class="chart-sub">Total ${eur(sum(sansDate))}, qui n'${sansDate.length > 1 ? 'entrent' : 'entre'} dans aucun mois.
+      Ouvrez-${sansDate.length > 1 ? 'les' : 'la'} en haut de la liste des dépenses pour saisir la date du ticket.</p>
+    </div>` : '';
+
   if (!inMonth.length) {
-    el.innerHTML = `<p class="empty">Aucune dépense enregistrée en ${esc(monthLabel(key))}.</p>`;
+    el.innerHTML = alerte + `<p class="empty">Aucune dépense enregistrée en ${esc(monthLabel(key))}.</p>`;
     return;
   }
 
@@ -40,7 +50,7 @@ export function renderBilan(el, expenses, key) {
   const jours = new Set(inMonth.map(e => e.date)).size;
 
   /* ---- tuiles ---- */
-  let html = `
+  let html = alerte + `
   <div class="tiles">
     <div class="tile">
       <div class="tile-label">Total du mois</div>

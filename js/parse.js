@@ -13,18 +13,27 @@ const deacc = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
  * (O→0, l→1, S→5, B→8). Ne s'applique qu'aux groupes contenant déjà
  * au moins deux vrais chiffres, pour ne pas transformer du texte en montant.
  */
-function fixDigits(s) {
+function fixDigits(s, aggressif = false) {
+  const minChiffres = aggressif ? 1 : 2;
   return s.replace(/[\dOoQlI|SsB]{1,6}[.,][\dOoQlI|SsB]{2}(?![\d])/g, m =>
-    (m.match(/\d/g) || []).length >= 2
+    (m.match(/\d/g) || []).length >= minChiffres
       ? m.replace(/[OoQ]/g, '0').replace(/[lI|]/g, '1').replace(/[Ss]/g, '5').replace(/B/g, '8')
       : m);
 }
 
 const MONEY_RE = /(?:^|[^\d.,])(\d{1,5}(?:[ .]\d{3})*)[.,](\d{2})(?![\d])/g;
 
+/**
+ * Répare les mots abîmés par l'OCR avant de chercher les mots-clés : un chiffre
+ * coincé entre deux lettres est forcément une lettre mal lue (M0NTANT, T0TAL).
+ * Ne touche pas aux nombres, qui ne sont jamais entourés de lettres.
+ */
+const LETTRES = { 0: 'O', 1: 'I', 5: 'S', 8: 'B', 6: 'G' };
+const keywordize = u => u.replace(/([A-Z])([01568])(?=[A-Z])/g, (_, a, d) => a + LETTRES[d]);
+
 /** Toutes les sommes d'une ligne, avec indication de la présence d'un symbole monétaire. */
-function moneyIn(line) {
-  const src = fixDigits(line);
+function moneyIn(line, aggressif = false) {
+  const src = fixDigits(line, aggressif);
   const out = [];
   MONEY_RE.lastIndex = 0;
   let m;
@@ -60,8 +69,9 @@ const AMOUNT_EXCLUDE = /\bA\s*RENDRE\b|\bRENDU\b|ESPECES|MONNAIE|\bTVA\b|\bHT\b|
 
 function findAmount(lines, U) {
   const cands = [];
+  const K = U.map(keywordize);   // lignes réparées, pour la seule reconnaissance des mots-clés
 
-  U.forEach((u, i) => {
+  K.forEach((u, i) => {
     if (AMOUNT_EXCLUDE.test(u)) return;
     let weight = 0;
     for (const [re, w] of AMOUNT_KEYS) if (re.test(u) && w > weight) weight = w;
@@ -70,10 +80,14 @@ function findAmount(lines, U) {
     // somme sur la ligne du mot-clé, sinon sur les 3 lignes suivantes
     for (let k = 0; k <= 3; k++) {
       const j = i + k;
-      if (j >= U.length) break;
+      if (j >= K.length) break;
       // ne pas déborder sur une ligne exclue ni sur un autre bloc porteur de mot-clé
-      if (k > 0 && (AMOUNT_EXCLUDE.test(U[j]) || hasKey(U[j]))) break;
-      const sums = moneyIn(lines[j]).filter(s => s.value >= 0.05 && s.value <= 20000 && !s.negative);
+      if (k > 0 && (AMOUNT_EXCLUDE.test(K[j]) || hasKey(K[j]))) break;
+      const utilisable = s => s.value >= 0.05 && s.value <= 20000 && !s.negative;
+      let sums = moneyIn(lines[j]).filter(utilisable);
+      // sur une ligne qui annonce un montant, on insiste : « 6O,OO » pour
+      // « 60,00 » est l'erreur de lecture la plus courante sur papier thermique
+      if (!sums.length) sums = moneyIn(lines[j], true).filter(utilisable);
       if (!sums.length) continue;
       const best = sums.reduce((a, b) => (b.value > a.value ? b : a));
       cands.push({ value: best.value, score: weight - k * 6 + (best.cur ? 4 : 0), line: lines[j] });
@@ -89,7 +103,7 @@ function findAmount(lines, U) {
 
   // repli : la plus grosse somme du ticket, hors lignes exclues
   let best = null;
-  U.forEach((u, i) => {
+  K.forEach((u, i) => {
     if (AMOUNT_EXCLUDE.test(u)) return;
     moneyIn(lines[i]).forEach(s => {
       if (s.negative || s.value < 0.05 || s.value > 20000) return;
@@ -127,7 +141,10 @@ function findDate(lines, U, today = new Date()) {
     found.push({ iso: iso(dt), hasTime: TIME_RE.test(u), index: i });
   });
 
-  if (!found.length) return { value: iso(today), confidence: 'low' };
+  // Aucune date lisible : on ne la remplace SURTOUT PAS par celle du jour,
+  // sinon un vieux ticket atterrit dans le bilan du mois en cours. La dépense
+  // reste sans date tant que l'utilisateur ne l'a pas saisie.
+  if (!found.length) return { value: null, confidence: null };
   const withTime = found.find(f => f.hasTime);
   const pick = withTime || found[0];
   return { value: pick.iso, confidence: withTime || found.length === 1 ? 'high' : 'low', index: pick.index };
@@ -157,7 +174,7 @@ const CHAINS = [
   ['YVES ROCHER', 'Yves Rocher'], ['MARIONNAUD', 'Marionnaud'], ['ACTION FRANCE', 'Action'],
 ];
 
-const NOISE = /CARTE\s*BANCAIRE|SANS.?CONTACT|CREDIT\s*AGRICOLE|SOCIETE\s*GENERALE|BANQUE\s*POP|CAISSE\s*D.?EPARGNE|\bBNP\b|\bLCL\b|SEPA|TICKET|DUPLICATA|MERCI|AU\s*REVOIR|RECU|PAIEMENT|\bDEBIT\b|\bCREDIT\b|SIRET|\bTVA\b|^TEL|ENTREPRISE\s*INDEPENDANTE|\bEUR\b|MONTANT|\bAUTO\b|POMPE|CARBURANT|INDICATIONS|CONTROLEE|ALPES\s*PROVENCE|ILE\s*DE\s*FRANCE|GARANTIE|OUVERTURE|DIMANCHE|LUNDI|SAMEDI|A\s*CONSERVER|CLIENT|COMMERCANT|PORTEUR|ACCEPTE|^CB$|^C$|NOMBRE\s*D|ARTICLES|RECAPITULATIF|IMMEDIATE|VOTRE\s*VISITE|^VER|QUANTITE|PRIX\s*UNIT|ESPECES|RENDRE/;
+const NOISE = /CARTE\s*BANCAIRE|SANS.?CONTACT|CREDIT\s*AGRICOLE|SOCIETE\s*GENERALE|BANQUE\s*POP|CAISSE\s*D.?EPARGNE|\bBNP\b|\bLCL\b|SEPA|TICKET|DUPLICATA|MERCI|AU\s*REVOIR|RECU|PAIEMENT|\bDEBIT\b|\bCREDIT\b|SIRET|\bTVA\b|^TEL|ENTREPRISE\s*INDEPENDANTE|\bEUR\b|MONTANT|\bAUTO\b|POMPE|CARBURANT|INDICATIONS|CONTROLEE|ALPES\s*PROVENCE|ILE\s*DE\s*FRANCE|GARANTIE|OUVERTURE|DIMANCHE|LUNDI|SAMEDI|A\s*CONSERVER|CLIENT|COMMERCANT|PORTEUR|ACCEPTE|^CB$|^C$|NOMBRE\s*D|ARTICLES|RECAPITULATIF|IMMEDIATE|VOTRE\s*VISITE|^VER|QUANTITE|PRIX\s*UNIT|ESPECES|RENDRE|\bDAB\b/;
 
 const CITY_RE = /^\d{5}\b|^[A-Z][A-Z\s\-']{2,30}$/;
 

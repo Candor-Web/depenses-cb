@@ -121,7 +121,9 @@ export function reconcile(expenses, bankRows) {
   const debits = bankRows.filter(r => r.amount < 0);
   const pairs = [];
 
-  expenses.forEach(e => {
+  // une dépense sans date ne peut pas être rapprochée : l'écart de date,
+  // qui départage les candidats de même montant, n'est pas calculable
+  expenses.filter(e => e.date).forEach(e => {
     debits.forEach(t => {
       if (Math.abs(Math.abs(t.amount) - e.amount) > 0.005) return;
       const d = days(e.date, t.date);

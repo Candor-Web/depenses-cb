@@ -170,6 +170,33 @@ TICKET CLIENT
 A CONSERVER`,
   },
   {
+    nom: 'Retrait au distributeur',
+    attendu: { montant: 60.00, date: '2026-08-02', cat: 'retrait' },
+    texte: `CREDIT AGRICOLE ALPES PROVENCE
+RETRAIT D'ESPECES
+LE 02/08/2026 A 14:22:08
+DAB 00123 ROGNES
+A0000000421010
+CB
+***********4887
+MONTANT
+       60,00 EUR
+DEBIT
+TICKET CLIENT A CONSERVER`,
+  },
+  {
+    nom: 'Ticket sans aucune date lisible',
+    attendu: { montant: 14.90, date: null },
+    texte: `BOULANGERIE DU COURS
+AIX EN PROVENCE
+BAGUETTE TRADITION        1,30
+CROISSANTS X4             4,60
+TARTE AUX POMMES          9,00
+MONTANT DU               14,90 EUR
+CB
+MERCI DE VOTRE VISITE`,
+  },
+  {
     nom: 'La Rotonde Aix (reçu CB, avec date de fin de validité)',
     attendu: { montant: 78.00, date: '2026-08-04', enseigne: 'La Rotonde', cat: 'restaurant' },
     texte: `CARTE BANCAIRE
@@ -228,6 +255,24 @@ for (const t of TICKETS) {
     (got.articles ? ` · ${got.articles} articles` : '') +
     `  [confiance montant ${r.amount.confidence}, date ${r.date.confidence}, enseigne ${r.merchant.confidence}]`);
   checks.filter(c => !c[1]).forEach(c => console.log(`   ! ${c[0]} : ${JSON.stringify(c[2])} au lieu de ${JSON.stringify(c[3])}`));
+}
+
+console.log('\n--- affectation des catégories ---');
+const CAS = [
+  ['Amazon', '', 'internet'],
+  ['PayPal', '', 'internet'],
+  ['Free Mobile', '', 'internet'],
+  ['Retrait', 'RETRAIT D\'ESPECES DAB 00123', 'retrait'],
+  ['Crédit Agricole', 'RETRAIT DAB ROGNES', 'retrait'],
+  ['Intermarché', 'DRIVE RETRAIT EN MAGASIN', 'alimentation'],
+  ['Carrefour', 'Carburant = E10', 'carburant'],
+  ['Pharmacie Mirabeau', '', 'sante'],
+];
+for (const [m, t, attendu] of CAS) {
+  const obtenu = guessCategory(m, t);
+  const bon = obtenu === attendu;
+  bon ? ok++ : (ko++, fail.push(`catégorie « ${m} » : obtenu ${obtenu}, attendu ${attendu}`));
+  console.log(`${bon ? '✓' : '✗'} ${m.padEnd(22)} ${catLabel(obtenu)}`);
 }
 
 console.log('\n--- texte dégradé (simulation OCR bruité) ---');

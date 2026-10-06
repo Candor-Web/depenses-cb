@@ -13,6 +13,8 @@ export const CATEGORIES = [
   { id: 'loisirs',      label: 'Loisirs',       color: 'var(--series-6)' },
   { id: 'transport',    label: 'Transport',     color: 'var(--series-7)' },
   { id: 'habillement',  label: 'Habillement',   color: 'var(--series-8)' },
+  { id: 'retrait',      label: 'Retrait CB',    color: 'var(--series-9)' },
+  { id: 'internet',     label: 'Internet',      color: 'var(--series-10)' },
   { id: 'divers',       label: 'Divers',        color: 'var(--series-other)' },
 ];
 
@@ -48,10 +50,18 @@ const RULES = [
   ['habillement', ['DECATHLON', 'ZARA', 'KIABI', 'H&M', 'C&A', 'CELIO', 'JULES', 'GEMO', 'GÉMO',
                    'CHAUSSURE', 'ANDRE', 'ERAM', 'INTERSPORT', 'GO SPORT', 'PRETMANIA', 'VETEMENT',
                    'BIJOUTERIE', 'SEPHORA', 'YVES ROCHER', 'MARIONNAUD', 'NOCIBE']],
+  ['retrait', ['RETRAIT', 'DAB', 'DISTRIBUTEUR', 'GAB']],
+  ['internet', ['AMAZON', 'CDISCOUNT', 'EBAY', 'ALIEXPRESS', 'TEMU', 'SHEIN', 'VINTED', 'ETSY',
+                'LEBONCOIN', 'BACKMARKET', 'RAKUTEN', 'ZALANDO', 'ASOS', 'PAYPAL', 'STRIPE',
+                'OVH', 'IONOS', 'GANDI', 'WORDPRESS', 'CANVA', 'ADOBE', 'MICROSOFT', 'GOOGLE',
+                'APPLE COM', 'OPENAI', 'ANTHROPIC', 'CLAUDE AI', 'FREE MOBILE', 'FREEBOX',
+                'BOUYGUES', 'SFR', 'ABONNEMENT', 'EN LIGNE', 'INTERNET']],
 ];
 
 /** Indices très caractéristiques : ils l'emportent sur le nom de l'enseigne. */
 const STRONG = [
+  // « RETRAIT » seul reste faible : un drive affiche « retrait en magasin »
+  ['retrait', /RETRAIT D?.?ESPECES|RETRAIT DAB|\bDAB\b|RETRAIT CB/],
   ['carburant', /\bCARBURANT\b|\bGAZOLE\b|\bGASOIL\b|\bSP9[58]\b|\bE10\b|\bE85\b|PRIX UNIT|\bLITRE|\bPOMPE\b/],
   ['sante', /\bORDONNANCE\b|\bPHARMACIE\b|\bMUTUELLE\b/],
   ['transport', /\bPEAGE\b|\bCONTROLE TECHNIQUE\b|\bPARKING\b/],

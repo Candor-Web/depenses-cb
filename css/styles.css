@@ -23,6 +23,8 @@
   --series-6: #008300;  /* vert    */
   --series-7: #9085e9;  /* violet  */
   --series-8: #e66767;  /* rouge   */
+  --series-9: #2b9ab4;  /* cyan    */
+  --series-10: #7d9c23; /* lime    */
   --series-other: #6b6a66;
 
   --accent:   #199e70;
@@ -167,6 +169,8 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .tile-sub { font-size: 0.75rem; color: var(--text-2); margin-top: 2px; }
 
 .chart { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; margin-bottom: 18px; }
+.chart.alerte { border-color: color-mix(in srgb, var(--warning) 45%, transparent); }
+.chart.alerte .chart-title { color: var(--warning); }
 .chart-title { font-size: 0.9375rem; font-weight: 600; margin: 0 0 2px; }
 .chart-sub { font-size: 0.75rem; color: var(--muted); margin: 0 0 14px; }
 
